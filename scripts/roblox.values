@@ -1,0 +1,62 @@
+# What "Java" returns to libroblox.so (tonic --values scripts/roblox.values).
+# Keys are exactly as the probe logs them: CLASS.METHOD(ARGS)RET or CLASS.FIELD:TYPE.
+# Anything not listed returns 0/null. Values marked GUESS are not yet checked
+# against the app (dexnatives.py --dump on the getter that produces them).
+
+# --- InitParams (built in wh/e.j) -------------------------------------------
+com/roblox/engine/jni/autovalue/InitParams.baseURL()Ljava/lang/String; = "https://www.roblox.com"
+# GUESS: built by sg/y0.Z0()
+com/roblox/engine/jni/autovalue/InitParams.userAgent()Ljava/lang/String; = "Mozilla/5.0 (Linux; Android 14) ROBLOX Android App 2.742.1059 Phone Hybrid()"
+com/roblox/engine/jni/autovalue/InitParams.platformParams()Lcom/roblox/engine/jni/model/PlatformParams; = new
+com/roblox/engine/jni/autovalue/InitParams.isTablet()Z = false
+com/roblox/engine/jni/autovalue/InitParams.isVrDevice()Z = false
+
+# --- PlatformParams -----------------------------------------------------------
+# (assetFolderPath: set by tonic from the installed APK's assets/content)
+com/roblox/engine/jni/model/PlatformParams.dpiScale:F = 1.0
+
+# --- Locale (GUESS: format) ---------------------------------------------------
+com/roblox/engine/jni/locale/NativeLocaleJavaInterface.getLocale()Ljava/lang/String; = "en_US"
+com/roblox/engine/jni/locale/NativeLocaleJavaInterface.getRobloxLocale()Ljava/lang/String; = "en_us"
+com/roblox/engine/jni/locale/NativeLocaleJavaInterface.getGameLocale()Ljava/lang/String; = "en_us"
+
+# --- User: logged out, so ids stay 0 and names stay null ------------------------
+com/roblox/engine/jni/user/NativeUserJavaInterface.getTheme()Ljava/lang/String; = "dark"
+
+# --- Device: returned null before ("DeviceStaticParams is null"); an empty
+# object shows which fields the engine reads from it.
+com/roblox/engine/jni/NativeGLJavaInterface.getDeviceStaticParams()Lcom/roblox/engine/jni/model/DeviceStaticParams; = new
+
+# --- DeviceStaticParams (read in JNI_OnLoad). Describes this machine honestly;
+# we do not pretend to be a specific phone.
+com/roblox/engine/jni/model/DeviceStaticParams.appVersion:Ljava/lang/String; = "2.742.1059"
+# GUESS: produced by gk/h.a()
+com/roblox/engine/jni/model/DeviceStaticParams.appBuildVariant:Ljava/lang/String; = "Release"
+com/roblox/engine/jni/model/DeviceStaticParams.cpu64Bit:Z = true
+com/roblox/engine/jni/model/DeviceStaticParams.deviceName:Ljava/lang/String; = "tonic"
+com/roblox/engine/jni/model/DeviceStaticParams.deviceSku:Ljava/lang/String; = "tonic"
+com/roblox/engine/jni/model/DeviceStaticParams.manufacturer:Ljava/lang/String; = "Linux"
+# osVersion is Build.VERSION.SDK_INT as a string (wh/o.e), i.e. the Android
+# API level of the platform the app runs on, not an OS name. "Linux" parses as
+# no version and the Lua app refuses to run ("no longer supports Android 6
+# and 7"). 34 is the API level tonic presents (matches the user agent's
+# "Android 14"); the device fields above stay honest.
+com/roblox/engine/jni/model/DeviceStaticParams.osVersion:Ljava/lang/String; = "34"
+com/roblox/engine/jni/model/DeviceStaticParams.socModel:Ljava/lang/String; = "x86_64"
+
+# --- StartAppParams (built in wh/e.F). GUESS: getter names follow the
+# builder's setters (setSurface -> surface()); the run's "values never asked
+# for" list shows any that are wrong.
+com/roblox/engine/jni/autovalue/StartAppParams.surface()Landroid/view/Surface; = new
+com/roblox/engine/jni/autovalue/StartAppParams.platformParams()Lcom/roblox/engine/jni/model/PlatformParams; = new
+com/roblox/engine/jni/autovalue/StartAppParams.selectedTheme()Ljava/lang/String; = "dark"
+
+# Starter place and script, as wh/o.b sets them on Android.
+com/roblox/engine/jni/autovalue/StartAppParams.appStarterPlace()Ljava/lang/String; = "rbxasset://places/Mobile.rbxl"
+com/roblox/engine/jni/autovalue/StartAppParams.appStarterScript()Ljava/lang/String; = "LuaAppStarterScript"
+
+# --- Synchronous message-bus handlers (see startup.script): what yl/c and km/e return.
+com/roblox/universalapp/messagebus/RequestHandlerRaw#connStatus.run(Ljava/lang/String;)Ljava/lang/String; = "{\"networkStatus\":1}"
+com/roblox/universalapp/messagebus/RequestHandlerRaw#connAvail.run(Ljava/lang/String;)Ljava/lang/String; = "{\"isNetworkStatusAvailable\":true}"
+com/roblox/universalapp/messagebus/RequestHandlerRaw#linkSettingsSupported.run(Ljava/lang/String;)Ljava/lang/String; = "{\"support\":false}"
+com/roblox/universalapp/messagebus/RequestHandlerRaw#linkSettingsSwitch.run(Ljava/lang/String;)Ljava/lang/String; = "{}"

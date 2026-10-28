@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Pufferfish
+GenericName=Roblox Client
+Comment=Play Roblox natively on OpenBSD desktops
+Exec=@BINDIR@/pufferfish %u
+TryExec=@BINDIR@/pufferfish
+Icon=pufferfish
+Terminal=false
+Categories=Game;ActionGame;Simulation;
+Keywords=roblox;game;pufferfish;openbsd;
+StartupWMClass=pufferfish
+StartupNotify=true
+MimeType=x-scheme-handler/roblox;x-scheme-handler/roblox-player;

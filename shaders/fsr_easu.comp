@@ -1,0 +1,25 @@
+// FSR 1 upscaling pass (EASU), AMD FidelityFX Super Resolution 1 (MIT,
+// third_party/LICENSE-FSR.txt). The game's frame -> window size.
+#version 450
+#extension GL_GOOGLE_include_directive : require
+layout(push_constant) uniform Const { uvec4 c0, c1, c2, c3; } pc;
+layout(set = 0, binding = 0) uniform sampler2D in_tex;
+layout(set = 0, binding = 1, rgba8) uniform writeonly image2D out_img;
+#define A_GPU 1
+#define A_GLSL 1
+#include "third_party/ffx_a.h"
+#define FSR_EASU_F 1
+AF4 FsrEasuRF(AF2 p) { return textureGather(in_tex, p, 0); }
+AF4 FsrEasuGF(AF2 p) { return textureGather(in_tex, p, 1); }
+AF4 FsrEasuBF(AF2 p) { return textureGather(in_tex, p, 2); }
+#include "third_party/ffx_fsr1.h"
+layout(local_size_x = 64) in;
+void one(AU2 pos) {
+  AF3 c;
+  FsrEasuF(c, pos, pc.c0, pc.c1, pc.c2, pc.c3);
+  imageStore(out_img, ASU2(pos), AF4(c, 1));
+}
+void main() {
+  AU2 p = ARmp8x8(gl_LocalInvocationID.x) + AU2(gl_WorkGroupID.x << 4u, gl_WorkGroupID.y << 4u);
+  one(p); p.x += 8u; one(p); p.y += 8u; one(p); p.x -= 8u; one(p);
+}

@@ -1,0 +1,65 @@
+#!/bin/sh
+# Pufferfish launcher installed at @BINDIR@/pufferfish
+# Sets up OpenBSD process resource limits, audio backend (sndio), and XDG paths,
+# then launches @LIBEXECDIR@/pufferfish seamlessly from your desktop menu or terminal.
+
+share='@SHAREDIR@'
+libexec='@LIBEXECDIR@'
+
+case "${1:-}" in
+  --version|-v) exec "$libexec/pufferfish" --version ;;
+  --help|-h)    echo "usage: pufferfish [--link URL | roblox-player:...]"; exit 0 ;;
+esac
+
+if [ "$(uname -s)" = "OpenBSD" ]; then
+  # OpenBSD's default login.conf datasize-cur (768M-1024M) is too small for
+  # libroblox.so + Vulkan texture heaps. Raise soft datasize and openfiles
+  # limits to the user's hard cap automatically.
+  max_data=$(ulimit -Hd 2>/dev/null || echo "")
+  if [ -n "$max_data" ] && [ "$max_data" != "unlimited" ]; then
+    ulimit -Sd "$max_data" 2>/dev/null || true
+  fi
+  max_nofile=$(ulimit -Hn 2>/dev/null || echo "")
+  if [ -n "$max_nofile" ]; then
+    ulimit -Sn "$max_nofile" 2>/dev/null || true
+  fi
+
+  # Default SDL2 audio to OpenBSD's native low-latency sndio daemon unless overridden
+  : "${SDL_AUDIODRIVER:=sndio}"
+  export SDL_AUDIODRIVER
+
+  # Ensure Mesa/Vulkan ICD discovery includes OpenBSD Xenocara and /usr/local
+  : "${VK_ICD_FILENAMES:=/usr/X11R6/share/vulkan/icd.d/radeon_icd.x86_64.json:/usr/X11R6/share/vulkan/icd.d/intel_icd.x86_64.json:/usr/local/share/vulkan/icd.d/lvp_icd.x86_64.json}"
+  export VK_ICD_FILENAMES
+fi
+
+state="${XDG_DATA_HOME:-$HOME/.local/share}/pufferfish"
+mkdir -p "$state" && chmod 700 "$state" && cd "$state" || exit 1
+
+PUFFERFISH_SHARE=$share
+PUFFERFISH_LAUNCHER='@BINDIR@/pufferfish'
+export PUFFERFISH_SHARE PUFFERFISH_LAUNCHER
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --link)
+      shift
+      if [ $# -gt 0 ]; then
+        PUFFERFISH_LINK=$1
+        export PUFFERFISH_LINK
+        shift
+      fi
+      ;;
+    roblox://*|roblox-player:*)
+      # Passed directly by xdg-open / desktop entry %u handler
+      PUFFERFISH_LINK=$1
+      export PUFFERFISH_LINK
+      shift
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
+
+exec "$libexec/pufferfish" auto --window --script "$share/scripts/startup.script" --values "$share/scripts/roblox.values"

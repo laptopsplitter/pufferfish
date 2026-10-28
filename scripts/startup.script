@@ -1,0 +1,113 @@
+# Roblox's startup natives, in the order the Android app calls them.
+# Paths point at ./data (the launcher runs tonic in its data folder).
+
+# --- RobloxApplication.onCreate ------------------------------------------
+static com/roblox/universalapp/webrtc/WebRtcLoader.initialize(Ljava/lang/String;)V "jingle_peerconnection_so"
+static com/roblox/client/JNIAAssetManagerSetup.initNative(Landroid/content/res/AssetManager;)V new
+static com/roblox/client/LocalStorageManager.initStorageManagerNativeV3(Landroid/content/res/AssetManager;Ljava/lang/String;Ljava/lang/String;)V new "${DATA}/files" "${DATA}/files"
+static com/roblox/universalapp/linking/JNIBaseUrlProtocol.init(Landroid/content/Context;)V new
+static com/roblox/universalapp/linking/JNIWebLoginProtocol.init(Landroid/content/Context;)V new
+
+# --- MainGameActivity.onCreate -> vi/b.l ------------------------------------
+static com/roblox/engine/jni/NativeSettingsInterface.getRunningArchitecture()I
+static com/roblox/engine/jni/NativeSettingsInterface.nativeSetBaseUrl(Ljava/lang/String;Ljava/lang/String;)V "https://www.roblox.com" "https://api.roblox.com"
+static com/roblox/engine/jni/NativeSettingsInterface.nativeSetRobloxChannel(Ljava/lang/String;)V "production"
+
+# --- MainGameActivity.K2 -> sg/y0.W0 ----------------------------------------
+static com/roblox/engine/jni/NativeSettingsInterface.nativeSetExceptionReasonFilename(Ljava/lang/String;)V "exception_reason.txt"
+static com/roblox/engine/jni/NativeSettingsInterface.nativeOverrideChannelPlatformName2(Ljava/lang/String;)V "GoogleAndroidApp"
+static com/roblox/engine/jni/NativeSettingsInterface.nativeOverrideChannelPlatformName(Ljava/lang/String;)V "GoogleAndroidApp"
+static com/roblox/engine/jni/NativeSettingsInterface.nativeSetCacheDirectory(Ljava/lang/String;)V "${DATA}/cache"
+static com/roblox/engine/jni/NativeSettingsInterface.nativeSetFilesDirectory(Ljava/lang/String;)V "${DATA}/files"
+static com/roblox/engine/jni/NativeSettingsInterface.nativeInitFastLog()V
+static com/roblox/engine/jni/NativeSettingsInterface.nativeSetRobloxVersion(Ljava/lang/String;)V "${VERSION}"
+# Crashpad starts a separate handler process; left out for now.
+# static com/roblox/engine/jni/NativeSettingsInterface.nativeInitCrashpad(Lcom/roblox/engine/jni/model/NativeInitCrashpadParams;)Z new
+static com/roblox/engine/jni/NativeSettingsInterface.nativeSetUserId(Ljava/lang/String;)V "0"
+
+# --- MainGameActivity$Companion -------------------------------------------
+# On Android this path holds content unpacked from the APK; an empty folder
+# makes setAssetFolder throw. tonic unpacks it when the APK is installed.
+static com/roblox/client/startup/MainGameActivity.nativeSetAssetPath(Ljava/lang/String;)V "${ASSETS}/content"
+# Preload overrides (flat {"FFlag": "value"}), from scripts/settings-overrides.json.
+# Only overrides survive the library's refetch ~2 minutes in.
+static com/roblox/client/startup/MainGameActivity.nativePreloadFlagOverrides(Ljava/lang/String;)V file:data/settings/preload-overrides.json
+
+# --- GameActivity.onCreate: starts android_main on its own thread. Next step.
+# com/google/androidgamesdk/GameActivity.initializeNativeCode(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Landroid/content/res/AssetManager;[BLandroid/content/res/Configuration;)J "${DATA}/files" "${DATA}/obb" "${DATA}/external" new null new
+
+# --- wh/e.E (ASMA.setup), after update_native_settings ----------------------
+static com/roblox/engine/jni/NativeGLInterface.nativeGameGlobalInit()V
+static com/roblox/engine/jni/NativeGLInterface.nativeUpdateAdapterInit()V
+
+# Client settings: fetched at each start (src/clientsettings.cpp) and merged
+# with scripts/settings-overrides.json. Needed for the Lua login screens and
+# for captchas (EnableWebViewService, EnableAndroidWebViewService).
+static com/roblox/engine/jni/NativeGLInterface.nativeInitClientSettings(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I file:data/settings/client-settings.json "" "GoogleAndroidApp" => 0
+static com/roblox/engine/jni/NativeGLInterface.nativePostClientSettingsLoadedInitialization3(Ljava/util/List;)V new
+static com/roblox/engine/jni/NativeSettingsInterface.nativeIsLuaLoginEnabled()Z
+
+# --- wh/e.j: app bridge init; InitParams values come from scripts/roblox.values
+# Saved cookies back into the library, and a handler for new ones, as Java
+# does at startup (sg/y0.S0, CookieProtocol): keeps you logged in between
+# runs (src/cookies.hpp; data/files/tonic-cookies.txt, delete it to log out).
+tonic cookies
+static com/roblox/engine/jni/NativeGLInterface.nativeAppBridgeV2InitWithParams(Lcom/roblox/engine/jni/autovalue/InitParams;)V new
+
+# --- start the app on the window (StartAppParams from scripts/roblox.values) ---
+# --- message bus: each subscription gets a named callback; "on" rules answer as Java would.
+
+# Plain messages: MessageBus.doSubscribeRaw(name, callback, flag)
+com/roblox/universalapp/messagebus/MessageBus.doSubscribeRaw(Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RawCallback;Z)Lcom/roblox/universalapp/messagebus/Connection; "Credentials.isAvailableRequest" new:credAvail false
+com/roblox/universalapp/messagebus/MessageBus.doSubscribeRaw(Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RawCallback;Z)Lcom/roblox/universalapp/messagebus/Connection; "Credentials.getCredentialsRequest" new:credGet false
+com/roblox/universalapp/messagebus/MessageBus.doSubscribeRaw(Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RawCallback;Z)Lcom/roblox/universalapp/messagebus/Connection; "Credentials.registerCredentialsRequest" new:credRegister false
+com/roblox/universalapp/messagebus/MessageBus.doSubscribeRaw(Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RawCallback;Z)Lcom/roblox/universalapp/messagebus/Connection; "Credentials.deleteKeystoreCredentialsRequest" new:credDelete false
+com/roblox/universalapp/messagebus/MessageBus.doSubscribeRaw(Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RawCallback;Z)Lcom/roblox/universalapp/messagebus/Connection; "Linking.isURLRegisteredRequest" new:linkURLReg false
+
+# Protocol method requests: (protocol, method, callback, flag)
+com/roblox/universalapp/messagebus/MessageBus.doSubscribeProtocolMethodRequestRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RawCallback;Z)Lcom/roblox/universalapp/messagebus/Connection; "Account" "deviceIntegrityAvailable" new:acctIntegrityAvail false
+com/roblox/universalapp/messagebus/MessageBus.doSubscribeProtocolMethodRequestRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RawCallback;Z)Lcom/roblox/universalapp/messagebus/Connection; "Account" "getIntegrityToken" new:acctIntegrityToken false
+com/roblox/universalapp/messagebus/MessageBus.doSubscribeProtocolMethodRequestRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RawCallback;Z)Lcom/roblox/universalapp/messagebus/Connection; "Account" "magicLogin" new:acctMagicLogin false
+com/roblox/universalapp/messagebus/MessageBus.doSubscribeProtocolMethodRequestRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RawCallback;Z)Lcom/roblox/universalapp/messagebus/Connection; "WebView" "isAvailable" new:webviewAvail false
+com/roblox/universalapp/messagebus/MessageBus.doSubscribeProtocolMethodRequestRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RawCallback;Z)Lcom/roblox/universalapp/messagebus/Connection; "WebView" "openWindow" new:webviewOpen false
+com/roblox/universalapp/messagebus/MessageBus.doSubscribeProtocolMethodRequestRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RawCallback;Z)Lcom/roblox/universalapp/messagebus/Connection; "MediaPicker" "isAvailable" new:mediaAvail false
+com/roblox/universalapp/messagebus/MessageBus.doSubscribeProtocolMethodRequestRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RawCallback;Z)Lcom/roblox/universalapp/messagebus/Connection; "Linking" "isURLRegistered" new:linkIsURLReg false
+com/roblox/universalapp/messagebus/MessageBus.doSubscribeProtocolMethodRequestRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RawCallback;Z)Lcom/roblox/universalapp/messagebus/Connection; "Linking" "isTrackingAvailable" new:linkTracking false
+com/roblox/universalapp/messagebus/MessageBus.doSubscribeProtocolMethodRequestRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RawCallback;Z)Lcom/roblox/universalapp/messagebus/Connection; "SystemTheme" "systemThemeSetTheme" new:themeSet false
+
+# Answers. Credentials (passkeys / saved passwords via Google Play services):
+# none on this machine. Same shape as bm/r.i builds on Android, all false.
+on credAvail com/roblox/universalapp/messagebus/MessageBus.publishRaw(Ljava/lang/String;Ljava/lang/String;)V "Credentials.isAvailableResponse" "{\"FIDO2\":{\"isAvailable\":false,\"supportsDeviceBoundOnly\":false,\"supportsSilentPasskeyUpgrade\":false,\"supportsPasskeyCreationOnDevice\":false},\"password\":{\"isAvailable\":false},\"keystore\":{\"isAvailable\":false}}"
+
+
+# --- Request handlers the Android app registers (decompiled Java: yl/c,
+# km/e, om/k). Synchronous ones answer through --values (RequestHandlerRaw#LABEL),
+# asynchronous ones through "on" rules calling callResponseHandlerRaw.
+com/roblox/universalapp/messagebus/MessageBus.setRequestHandlerRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RequestHandlerRaw;)V "ConnectivityProtocol" "GetNetworkStatus" new:connStatus
+com/roblox/universalapp/messagebus/MessageBus.setRequestHandlerRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RequestHandlerRaw;)V "ConnectivityProtocol" "IsNetworkStatusAvailable" new:connAvail
+com/roblox/universalapp/messagebus/MessageBus.setRequestHandlerRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RequestHandlerRaw;)V "Linking" "supportsSwitchToSettingsApp" new:linkSettingsSupported
+com/roblox/universalapp/messagebus/MessageBus.setRequestHandlerRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RequestHandlerRaw;)V "Linking" "switchToSettingsApp" new:linkSettingsSwitch
+com/roblox/universalapp/messagebus/MessageBus.setRequestHandlerAsyncRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RequestHandlerAsyncRaw;)V "PermissionsProtocol" "HasPermissions" new:permHas
+com/roblox/universalapp/messagebus/MessageBus.setRequestHandlerAsyncRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RequestHandlerAsyncRaw;)V "PermissionsProtocol" "PermissionsRequest" new:permRequest
+com/roblox/universalapp/messagebus/MessageBus.setRequestHandlerAsyncRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RequestHandlerAsyncRaw;)V "PermissionsProtocol" "SupportsPermissions" new:permSupports
+com/roblox/universalapp/messagebus/MessageBus.setRequestHandlerAsyncRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RequestHandlerAsyncRaw;)V "PermissionsProtocol" "ShouldShowPermissionUpsell" new:permUpsell
+com/roblox/universalapp/messagebus/MessageBus.setRequestHandlerAsyncRaw(Ljava/lang/String;Ljava/lang/String;Lcom/roblox/universalapp/messagebus/RequestHandlerAsyncRaw;)V "PermissionsProtocol" "ShouldShowRequestPermissionRationale" new:permRationale
+# Answers: no camera/mic/contacts/notification permissions on this machine.
+on permHas com/roblox/universalapp/messagebus/MessageBus.callResponseHandlerRaw(Ljava/lang/String;Ljava/lang/String;)V "$arg2" "{\"status\":\"DENIED\",\"missingPermissions\":[]}"
+on permRequest com/roblox/universalapp/messagebus/MessageBus.callResponseHandlerRaw(Ljava/lang/String;Ljava/lang/String;)V "$arg2" "{\"status\":\"DENIED\",\"missingPermissions\":[]}"
+on permSupports com/roblox/universalapp/messagebus/MessageBus.callResponseHandlerRaw(Ljava/lang/String;Ljava/lang/String;)V "$arg2" "{\"permissions\":[]}"
+on permUpsell com/roblox/universalapp/messagebus/MessageBus.callResponseHandlerRaw(Ljava/lang/String;Ljava/lang/String;)V "$arg2" "{\"upsellStatus\":\"HIDE\"}"
+on permRationale com/roblox/universalapp/messagebus/MessageBus.callResponseHandlerRaw(Ljava/lang/String;Ljava/lang/String;)V "$arg2" "{\"upsellStatus\":\"HIDE\"}"
+
+# ACTION_LOG_IN needs no answer: on this build's startup path (MainGameActivity)
+# the Java side ignores it (ak/k0 falls back to an empty listener). The Lua
+# app shows its own LoginNative page by itself.
+
+# The WebView protocol (src/webview.cpp), set up where Android's Java side
+# does it: while the activity is created, before the app starts (ak/a0 is made
+# in NativeHelper.n0). Set up after StartApp, the engine's WebViewService never
+# hears the page's callbacks and every challenge times out after 60 s.
+# EnableWebViewService and EnableAndroidWebViewService (bytes the library
+# keeps; 1 = on). Read only.
+tonic webview
+static com/roblox/engine/jni/NativeGLInterface.nativeAppBridgeV2StartAppWithParams(Lcom/roblox/engine/jni/autovalue/StartAppParams;)V new
