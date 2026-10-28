@@ -1,0 +1,2 @@
+# make test-vulkan: Vulkan as libroblox uses it, through tonic's layer.
+static com/example/Test.vulkanFrames(Landroid/view/Surface;)Ljava/lang/String; new => "ok:vulkan 120"

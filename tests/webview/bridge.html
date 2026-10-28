@@ -1,0 +1,11 @@
+<!doctype html>
+<title>bridge test</title>
+<script>
+  console.log("bridge page running", {ok: true});
+  // What a Roblox hybrid page does: call the Android bridge with a JSON string.
+  window.__globalRobloxAndroidBridge__.executeRoblox(JSON.stringify({moduleID: "Test", functionName: "hello", params: {n: 1}}));
+</script>
+<script>
+  // An app link must be refused inside the window, never handed to the desktop.
+  setTimeout(function () { location.href = "robloxmobile://navigation/test"; }, 0);
+</script>

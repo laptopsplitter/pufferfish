@@ -1,0 +1,4 @@
+# make test-window: needs a display (or xvfb-run). Draws one magenta frame.
+static com/example/Test.drawFrame(Landroid/view/Surface;)Ljava/lang/String; new => "ok:255,0,255"
+# What you type is drawn over the focused TextBox (src/textoverlay.cpp).
+static com/example/Test.typedFrame()Ljava/lang/String; => "ok"

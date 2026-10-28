@@ -1,0 +1,56 @@
+# Calls tonic makes after JNI_OnLoad (make test). "=> X" checks the result.
+
+# Registered by JNI_OnLoad with RegisterNatives, so found without a symbol.
+static com/example/Test.add(II)I 2 3 => 5
+# Integer, float, double, long and String arguments, some passed on the stack.
+static com/example/Test.mixed(Ljava/lang/String;IZFDJLjava/lang/String;IIF)J "hi" -7 true 1.5 2.25 0x10000000000 "there" 100 200 -0.5 => 1099511628076
+# '_' in a name is mangled to _1.
+static com/example/Test.with_underscore()I => 42
+# Only the overloaded (long) JNI name is exported.
+static com/example/Test.over(I)I 5 => 1005
+static com/example/Test.half(F)F 3 => 1.5
+# Instance method: gets a fresh com/example/Test object as this.
+com/example/Test.echo(Ljava/lang/String;)Ljava/lang/String; "round trip" => "round trip"
+com/example/Test.echo(Ljava/lang/String;)Ljava/lang/String; file:tests/assets/hello.txt => "hi"
+# Java values from tests/test.values (static String/float methods, a static
+# int field, an object from an instance method and a float field read off it).
+com/example/Test.askJava()Ljava/lang/String; => "hello|1.5|7|2.75"
+# AAssetManager over tests/assets (--assets): by buffer and by file descriptor.
+static com/example/Test.readAsset(Landroid/content/res/AssetManager;Ljava/lang/String;)Ljava/lang/String; new "hello.txt" => "2:hi:fd-same"
+static com/example/Test.readAsset(Landroid/content/res/AssetManager;Ljava/lang/String;)Ljava/lang/String; new "nope.txt" => "missing"
+# getaddrinfo with bionic's struct layout and constants (EAI_NONAME is 8 on bionic).
+static com/example/Test.resolve(Ljava/lang/String;)Ljava/lang/String; "127.0.0.1" => "family 2 port 443 addr 127.0.0.1"
+static com/example/Test.resolve(Ljava/lang/String;)Ljava/lang/String; "not an address" => "error 8"
+# "on" rules: answer a callback the library makes, the way the probe answers
+# message-bus requests (from our own thread, so waitPublished waits for it). $arg is the first String the library passed.
+static com/example/Test.subscribe(Ljava/lang/String;Lcom/example/Callback;)V "ping" new:cb
+on cb static com/example/Test.publish(Ljava/lang/String;)V "reply:$arg"
+static com/example/Test.fire(Ljava/lang/String;)V "{\"q\":1}"
+static com/example/Test.waitPublished()Ljava/lang/String; => "reply:{\"q\":1}"
+# static:METHOD~TEXT rules fire on the library's static calls into "Java",
+# only when TEXT is in the arguments: "stay" does not match, "go" does.
+on static:event~"go" static com/example/Test.publish(Ljava/lang/String;)V "static-rule:$arg"
+static com/example/Test.notifyJava(Ljava/lang/String;)V "stay"
+static com/example/Test.notifyJava(Ljava/lang/String;)V "go"
+static com/example/Test.waitPublished()Ljava/lang/String; => "static-rule:go"
+# Per-object values (tests/test.values: Handler#h1 / Handler#h2) and $arg2.
+static com/example/Test.askHandler(Lcom/example/Handler;Ljava/lang/String;)Ljava/lang/String; new:h1 "{}" => "one"
+static com/example/Test.askHandler(Lcom/example/Handler;Ljava/lang/String;)Ljava/lang/String; new:h2 "{}" => "two"
+static com/example/Test.subscribe(Ljava/lang/String;Lcom/example/Callback;)V "async" new:acb
+on acb static com/example/Test.publish(Ljava/lang/String;)V "id=$arg2 params=$arg1"
+static com/example/Test.fireAsync(Ljava/lang/String;Ljava/lang/String;)V "{}" "req-7"
+static com/example/Test.waitPublished()Ljava/lang/String; => "id=req-7 params={}"
+# byte[] support (showKeyboard passes the TextBox text as one)
+static com/example/Test.bytes(Ljava/lang/String;)Ljava/lang/String; "héllo" => "héllo:6"
+static com/example/Test.typed()V
+static com/example/Test.viaBytes(Ljava/lang/String;)Ljava/lang/String; "typed: é" => "typed: é"
+# FMOD audio output (src/audio.cpp)
+static com/example/Test.audio()Ljava/lang/String; => "init:1 writes:8"
+# Login cookies (src/cookies.cpp): the first run has none and saves what the
+# library reports; the second restores them (the expired one dropped).
+tonic cookies
+static com/example/Test.cookies()Ljava/lang/String; => "https://www.roblox.com|"
+tonic cookies
+static com/example/Test.cookies()Ljava/lang/String; => "https://www.roblox.com|.ROBLOSECURITY=testsessionvalue; a=1"
+# ALooper (src/looper.cpp)
+static com/example/Test.looper()Ljava/lang/String; => "main:1 idle:-3 ready:-2 hits:1"

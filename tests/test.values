@@ -1,0 +1,8 @@
+# Values for tests/natives.script (make test): what "Java" returns.
+com/example/Test.greeting()Ljava/lang/String; = "hello"
+com/example/Test.scale()F = 1.5
+com/example/Test.COUNT:I = 7
+com/example/Test.params()Lcom/example/Params; = new
+com/example/Params.dpi:F = 2.75
+com/example/Handler#h1.run(Ljava/lang/String;)Ljava/lang/String; = "one"
+com/example/Handler#h2.run(Ljava/lang/String;)Ljava/lang/String; = "two"
