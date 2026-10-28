@@ -1,0 +1,10 @@
+tonic
+Copyright 2026 the tonic contributors
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This product includes shader code from AMD FidelityFX Super Resolution 1 and
+NVIDIA Image Scaling, both under the MIT License (shaders/third_party).
+
+tonic is not affiliated with or endorsed by Roblox Corporation. Roblox is a
+trademark of Roblox Corporation. No Roblox code or assets are included.
