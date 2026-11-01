@@ -9,7 +9,7 @@ Play Roblox natively on **OpenBSD**, FreeBSD, and Linux desktops: no Wine, no em
 Open a terminal as your normal user and run:
 
 ```sh
-git clone https://github.com/YOUR_USERNAME/pufferfish.git
+git clone https://github.com/laptopsplitter/pufferfish.git
 cd pufferfish
 ./installer.sh
 ```
