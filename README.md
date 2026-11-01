@@ -1,5 +1,7 @@
 # Pufferfish
 
+## (THIS IS VIBECODED!!!)
+
 Play Roblox natively on **OpenBSD**, FreeBSD, and Linux desktops: no Wine, no emulator, no virtual machine. Pufferfish runs Roblox's official x86-64 Android build as a native desktop application with mouse, keyboard, controllers, Vulkan or OpenGL graphics, and native OpenBSD `sndio` audio.
 
 ## Install on OpenBSD (or FreeBSD / Linux)
